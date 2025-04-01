@@ -1,5 +1,6 @@
 import re
 from exceptions import WrongPhoneNumber, WrongDateFormat
+from datetime import datetime as dt
 
 class Field:
     def __init__(self, value):
@@ -32,11 +33,12 @@ class Phone(Field):
         self._value = new_phone
 
 class Birthday(Field):
-    date_format_pattern = re.compile(r"^\d{2}\.\d{2}\.\d{4}$")
+    date_format_pattern = r'%d.%m.%Y'
 
     @staticmethod
     def validate_date(date: str) -> bool:
-        return bool(Birthday.date_format_pattern.match(date))
+        is_datetime = dt.strptime(date, Birthday.date_format_pattern)
+        return bool(is_datetime)
 
     def __init__(self, date: str):
         self.value = date

@@ -2,7 +2,7 @@ from colorama import Fore
 from logger.logger import log_warning, log_info
 from decorators import error_handler
 from .entities import AddressBook, Record
-from exceptions import RecordNotFound, FieldNotFound
+from exceptions import RecordNotFound, FieldNotFound, PhoneAlreadyOwned
 
 class PhoneBookService:
     def __init__(self, book):
@@ -21,12 +21,15 @@ class PhoneBookService:
         name, phone = args
         record = self.book.find(name)
         if record == None:
+            if self.book.is_phone_owned(phone):
+                raise PhoneAlreadyOwned(f"This number {Fore.YELLOW}{phone}{Fore.RESET} already owned.")
+            
             new_record = Record(name)
             new_record.add_phone(phone)
             self.book.add_record(new_record)
             log_info(f"Contact {Fore.GREEN}{name.capitalize()}{Fore.RESET} with phone number {Fore.GREEN}{phone}{Fore.RESET} has been added.")
             return
-        
+
         existing_phone = record.find_phone(phone)
         if existing_phone == None:
             record.add_phone(phone)
@@ -47,6 +50,9 @@ class PhoneBookService:
             raise FieldNotFound(f"Phone number {Fore.GREEN}{new_phone}{Fore.RESET} not exist. " /
                                 f"U can add it by using [{Fore.CYAN}add{Fore.RESET}] command, type help for more info.")
         
+        if self.book.is_phone_owned(new_phone):
+            raise PhoneAlreadyOwned(f"This number {Fore.YELLOW}{new_phone}{Fore.RESET} already owned.")
+
         phone.value = new_phone
         log_info(f"Contact {Fore.GREEN}{name.capitalize()}{Fore.RESET} has been updated with new phone number {Fore.GREEN}{phone}{Fore.RESET}.")
         
@@ -66,9 +72,7 @@ class PhoneBookService:
         record = self.book.find(name)
         if record == None:
             raise RecordNotFound(f"Record not found with name: {Fore.GREEN}{name}{Fore.RESET}")
-        # add Jane +380991112233
-        # add-birthday Jane 03.04.2025
-        # show-birthday Jane
+
         record.add_birthday(date)
         log_info(f"Contact's {Fore.GREEN}{name.capitalize()}{Fore.RESET} birthday was updated: {Fore.GREEN}{date}{Fore.RESET}.")
 
@@ -86,7 +90,7 @@ class PhoneBookService:
     
     @error_handler
     def show_next_week_birthdays(self):
-        self.book.find_next_week_bithdays()
+        print(self.book.find_next_week_bithdays())
 
     @error_handler
     def show_all_contacts(self):

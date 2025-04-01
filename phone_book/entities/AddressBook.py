@@ -3,6 +3,7 @@ from .Records import Record
 from datetime import datetime as dtdt, timedelta as td
 from .Fields import Birthday
 from typing import Dict
+from colorama import Fore
 
 class AddressBook(UserDict):
     def __init__(self):
@@ -16,6 +17,10 @@ class AddressBook(UserDict):
             return None
         return self.data[name]
     
+    def is_phone_owned(self, phone: str):
+        all_phones = [phone.value for record in self.data.values() for phone in record.phones]
+        return bool(phone in all_phones)
+    
     def delete(self, name):
         self.data.pop(name)
 
@@ -23,7 +28,7 @@ class AddressBook(UserDict):
         if not self.data:
             return "Phone book is empty"
         
-        date_format_pattern = Birthday.DATE_FORMAT_PATTERN
+        date_format_pattern = Birthday.date_format_pattern
         upcomming_congrats: list[str] = []
         today = dtdt.today().date()
         next_seven_days = today + td(7)
@@ -37,6 +42,9 @@ class AddressBook(UserDict):
             return date
         
         for record in self.data.values():
+            if record.birthday == None:
+                continue
+
             bd = dtdt.strptime(record.birthday.value, date_format_pattern).date()
             bd_with_year = dtdt(year=today.year, month=bd.month, day=bd.day).date()
             congrats_day = None
@@ -47,8 +55,8 @@ class AddressBook(UserDict):
             congrats_day = calculate_week_day(bd_with_year)
 
             if  congrats_day >= today and congrats_day <= next_seven_days:
-                upcomming_congrats.append(f"{record.name._value} at {congrats_day.strftime(date_format_pattern)}")
-        
+                upcomming_congrats.append(f"{Fore.GREEN}{record.name._value}{Fore.RESET} at {Fore.MAGENTA}{congrats_day.strftime(date_format_pattern)}{Fore.RESET}")
+
         return "\n".join(upcomming_congrats)
     
 
